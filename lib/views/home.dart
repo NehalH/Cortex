@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:cortex/constants/constants.dart';
 import 'package:cortex/interpreter/currencyClassifier/currency_classifier.dart';
 import 'package:cortex/interpreter/interface.dart';
@@ -12,6 +13,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -29,6 +33,8 @@ class _HomeState extends State<Home> {
   late Interpreter _interpreter;
   late RegressionType regressionType;
   final picker = ImagePicker();
+  final wsUrl = Uri.parse('ws://192.168.4.1/ws');
+  late WebSocketChannel channel;
 
   @override
   void initState() {
@@ -37,13 +43,15 @@ class _HomeState extends State<Home> {
       _image = null;
       _isLoadingModels = true;
       _status = 'Loading the Models . . .';
-
       // set default interpreter as Currency classifier
       regressionType = RegressionType.currencyClassification;
       _interpreter = CurrencyClassifier();
     });
     loadModel().then((value) {
       setState(() {});
+    });
+    initializeWebSocketConnection().then((channel) {
+      setupWebSocketListener();
     });
     TextToSpeech.init();
   }
@@ -53,6 +61,42 @@ class _HomeState extends State<Home> {
     //dis function disposes and clears our memory
     super.dispose();
     Tflite.close();
+    channel.sink.close(status.goingAway);
+  }
+
+  Future<void> initializeWebSocketConnection() async {
+    channel = WebSocketChannel.connect(wsUrl);
+    await channel.ready;
+    return ;
+  }
+
+  void setupWebSocketListener() {
+    channel.stream.listen((dynamic message) {
+      if (message is List<int>) {
+        handleImageFromWebSocket(message);
+      }
+    });
+  }
+
+  void handleImageFromWebSocket(dynamic imageData) async {
+    Uint8List bytes = Uint8List.fromList(imageData);
+    File tempFile = await _createTempFile(bytes);
+    if (tempFile != null) {
+      setState(() {
+        _image = tempFile.path;
+      });
+      runThroughModel();
+    } else {
+      print('Error: Failed to create temporary file for image');
+    }
+  }
+
+  Future<File> _createTempFile(Uint8List bytes) async {
+    Directory tempDir = await getTemporaryDirectory();
+    String tempFilePath = '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+    File tempFile = File(tempFilePath);
+    await tempFile.writeAsBytes(bytes);
+    return tempFile;
   }
 
   loadModel() async {
