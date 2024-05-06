@@ -1,6 +1,6 @@
 # Cortex
 
-Cortex is a version of [Cortex-Standalone](https://github.com/NehalH/Cortex-Standalone) designed to be a part of the A-Eye system. 
+Cortex is a version of [Cortex-Standalone](https://github.com/NehalH/Cortex-Standalone), and is designed to be a part of the A-Eye system. 
 
 ## Functions
  - Upload image from camera/gallery
