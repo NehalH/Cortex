@@ -10,7 +10,7 @@ Cortex is a version of [Cortex-Standalone](https://github.com/NehalH/Cortex-Stan
  - Text Recognition
  - Text-to-speech conversion
 
-### Other Related Projects
+## Other Related Projects
  - [Cortex (Standalone)](https://github.com/NehalH/Cortex-standalone)
  - [The Eye Firmware](https://github.com/NehalH/The_Eye_Firmware) (Part of the "A-Eye" System)
  - [Websocket client](https://github.com/NehalH/WebSocket-client) (Browser websocket client for "The Eye")
